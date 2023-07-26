@@ -1,0 +1,56 @@
+public class TaskTriggerHandler {
+    public static void handleTaskInsert(List<Task> newTasks) {
+        List<Account> accountsToUpdate = new List<Account>();
+
+        for (Task newTask : newTasks) {
+            // Check if the Task is created with "Not Started" status
+            if (newTask.Status == 'Not Started') {
+                // Find the associated Account
+                if (newTask.WhatId != null && newTask.WhatId.getSObjectType() == Account.SObjectType) {
+                    Account relatedAccount = new Account(Id = newTask.WhatId);
+
+                    // Set the Account as Inactive
+                    relatedAccount.Active__c = false;
+
+                    accountsToUpdate.add(relatedAccount);
+                }
+            }
+        }
+
+        // Perform bulk DML operation
+        if (!accountsToUpdate.isEmpty()) {
+            update accountsToUpdate;
+        }
+    }
+
+    public static void handleTaskUpdate(List<Task> updatedTasks, Map<Id, Task> oldTaskMap) {
+        List<Account> accountsToUpdate = new List<Account>();
+
+        for (Task updatedTask : updatedTasks) {
+            Task oldTask = oldTaskMap.get(updatedTask.Id);
+
+            // Check if the Task is completed (Status changed from something else to "Completed")
+            if (updatedTask.Status == 'Completed' && (oldTask == null || oldTask.Status != 'Completed')) {
+                // Find the associated Account
+                if (updatedTask.WhatId != null && updatedTask.WhatId.getSObjectType() == Account.SObjectType) {
+                    Account relatedAccount = new Account(Id = updatedTask.WhatId);
+
+                    // Set the Account as Active
+                    relatedAccount.Active__c = true;
+
+                    // Transfer the Task comments to Account Description
+                    if (updatedTask.Description != null) {
+                        relatedAccount.Description = updatedTask.Description;
+                    }
+
+                    accountsToUpdate.add(relatedAccount);
+                }
+            }
+        }
+
+        // Perform bulk DML operation
+        if (!accountsToUpdate.isEmpty()) {
+            update accountsToUpdate;
+        }
+    }
+}

@@ -1,0 +1,9 @@
+trigger TaskonTrigger on Task (after insert, after update) {
+    if (Trigger.isAfter) {
+        if (Trigger.isInsert) {
+            TaskTriggerHandler.handleTaskInsert(Trigger.new);
+        } else if (Trigger.isUpdate) {
+            TaskTriggerHandler.handleTaskUpdate(Trigger.new, Trigger.oldMap);
+        }
+    }
+}

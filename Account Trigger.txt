@@ -1,0 +1,20 @@
+trigger CreateTaskOnAccountInsert on Account (after insert) {
+    List<Task> tasksToInsert = new List<Task>();
+
+    for (Account newAccount : Trigger.new) {
+        // Create a new Task associated with the Account
+        Task newTask = new Task(
+            WhatId = newAccount.Id, // Set the Account as the related record
+            Subject = 'Review Account-' + newAccount.Id, // Task Subject with Account Number
+            ActivityDate = System.today().addDays(7), // Due Date after a week
+            Status = 'Not Started', // Task Status
+            OwnerId = newAccount.OwnerId // Assigned To: owner of the Account
+        );
+        tasksToInsert.add(newTask);
+    }
+
+    // Insert the tasks
+    if (!tasksToInsert.isEmpty()) {
+        insert tasksToInsert;
+    }
+}
